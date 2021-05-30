@@ -6,11 +6,13 @@ from datetime import datetime
 import urllib3
 import time
 import logging
-import dotenv
+import os
+from os import environ
+
+WEBHOOK = environ['WEBHOOK']
+DELAY = environ['DELAY']
 
 logging.basicConfig(filename='VFATscraperlog.log', filemode='a', format='%(asctime)s - %(name)s - %(message)s', level=logging.DEBUG)
-
-CONFIG = dotenv.dotenv_values()
 
 PROJECTS = []
 
@@ -68,17 +70,17 @@ def scraper():
 
 def test_webhook(): # Sends a test webhook
     data = {
-        "username": CONFIG['USERNAME'],
+        "username": "VFat Scraper",
         "embeds": [{
             "title": "Testing Webhook",
             "description": "test",
-            "color": int(CONFIG['COLOUR']),
+            "color": int(5172613),
             "footer": {'text': 'made by howie'},
             "timestamp": str(datetime.utcnow())
         }]
     }
 
-    result = requests.post(CONFIG['WEBHOOK'], data=json.dumps(data), headers={"Content-Type": "application/json"})
+    result = requests.post(WEBHOOK, data=json.dumps(data), headers={"Content-Type": "application/json"})
     try:
         result.raise_for_status()
     except requests.exceptions.HTTPError as err:
@@ -89,11 +91,11 @@ def test_webhook(): # Sends a test webhook
 
 def discord_webhook(title, description, name, url, token): # Sends webhook notification to specified webhook URL
     data = {
-        'username': CONFIG['USERNAME'],
+        'username': "VFat Scraper",
         'embeds': [{
             'title': title,
             'description': description,
-            'color': int(CONFIG['COLOUR']),
+            'color': int(5172613),
             'footer': {'text': 'made by maz'},
             'timestamp': str(datetime.utcnow()),
             'fields': [
@@ -104,7 +106,7 @@ def discord_webhook(title, description, name, url, token): # Sends webhook notif
         }]
     }
     
-    result = requests.post(CONFIG['WEBHOOK'], data=json.dumps(data), headers={"Content-Type": "application/json"})
+    result = requests.post(WEBHOOK, data=json.dumps(data), headers={"Content-Type": "application/json"})
 
     try:
         result.raise_for_status()
@@ -157,7 +159,7 @@ def monitor(): #initiates monitor
 
         start = 0
 
-        time.sleep(float(CONFIG['DELAY']))
+        time.sleep(float(DELAY))
 
 
 
