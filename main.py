@@ -87,7 +87,6 @@ def test_webhook(): # Sends a test webhook
         print("Payload delivered successfully, code {}.".format(result.status_code))
         logging.info(msg="Payload delivered successfully, code {}.".format(result.status_code))
 
-
 def discord_webhook(title, description, name, url, token): # Sends webhook notification to specified webhook URL
     data = {
         'username': CONFIG['USERNAME'],
