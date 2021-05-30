@@ -73,7 +73,7 @@ def test_webhook(): # Sends a test webhook
             "title": "Testing Webhook",
             "description": "test",
             "color": int(CONFIG['COLOUR']),
-            "footer": {'text': 'made by maz'},
+            "footer": {'text': 'made by howie'},
             "timestamp": str(datetime.utcnow())
         }]
     }
