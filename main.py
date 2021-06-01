@@ -9,15 +9,22 @@ import logging
 import os
 from os import environ
 
-WEBHOOK = environ['WEBHOOK']
-DELAY = environ['DELAY']
+# WEBHOOK = environ['WEBHOOK']
+# DELAY = environ['DELAY']
 
 logging.basicConfig(filename='VFATscraperlog.log', filemode='a', format='%(asctime)s - %(name)s - %(message)s', level=logging.DEBUG)
 
-PROJECTS = []
+PROJECTS = {
+    "all": [],
+    "bsc": [],
+    "polygon": [],
+    "xdai":[],
+    "avax":[],
+    "fantom":[],
+}
 
-#scrapes "https://vfat.tools/All" page and outputs result as objects
-def scraper():
+#scrapes "https://vfat.tools/" pages and outputs result as objects
+def scraper(chain):
     base_url = "https://vfat.tools"
 
     projectnames =[]
@@ -26,11 +33,11 @@ def scraper():
 
     items = []
 
-    r = requests.get("https://vfat.tools/all/")
+    r = requests.get("https://vfat.tools/{}/".format(chain))
     soup = bs(r.text, 'html.parser')
     # currently website loads a JS script to load in pool provider data, hence have to find this script
     scripts = soup.find_all('script')
-    link_r = [x.get("src") for x in scripts if x.get("src") != None and x.get("src").startswith("/js/all.")]
+    link_r = [x.get("src") for x in scripts if x.get("src") != None and x.get("src").startswith("/js/{}.".format(chain))]
 
     response = requests.get(base_url+link_r[0])
     list1 = response.text
@@ -63,6 +70,7 @@ def scraper():
 
     
     logging.info(msg='Successfully scraped site!')
+    print('Successfully scraped {} page!'.format(chain))
 
     return items
 
@@ -72,10 +80,9 @@ def test_webhook(): # Sends a test webhook
     data = {
         "username": "VFat Scraper",
         "embeds": [{
-            "title": "Testing Webhook",
+            "title": "Starting Up Scraper",
             "description": "test",
             "color": int(5172613),
-            "footer": {'text': 'made by howie'},
             "timestamp": str(datetime.utcnow())
         }]
     }
@@ -89,14 +96,13 @@ def test_webhook(): # Sends a test webhook
         print("Payload delivered successfully, code {}.".format(result.status_code))
         logging.info(msg="Payload delivered successfully, code {}.".format(result.status_code))
 
-def discord_webhook(title, description, name, url, token): # Sends webhook notification to specified webhook URL
+def discord_webhook(title, description, name, url, token, color): # Sends webhook notification to specified webhook URL
     data = {
         'username': "VFat Scraper",
         'embeds': [{
             'title': title,
             'description': description,
-            'color': int(5172613),
-            'footer': {'text': 'made by maz'},
+            'color': int(color),
             'timestamp': str(datetime.utcnow()),
             'fields': [
                 {'name': 'Project Name', 'value': name},
@@ -113,29 +119,38 @@ def discord_webhook(title, description, name, url, token): # Sends webhook notif
     except requests.exceptions.HTTPError as err:
         logging.error(msg=err)
     else:
-        print("Payload delivered successfully, code {}.".format(result.status_code))
+        print("New project added! Payload delivered successfully, code {}.".format(result.status_code))
         logging.info(msg="Payload delivered successfully, code {}.".format(result.status_code))
 
 
 
-def checker(project): #returns Boolean regarding project status
-    return project in PROJECTS
+def checker(project, chain): #returns Boolean regarding project status
+    return project in PROJECTS[chain]
 
 
-def comparator(item, start):
+def comparator(item, start, chain):
     output_item = [item['name'], item['URL'], item['token']]
-    if checker(output_item) == True:
+    if checker(output_item, chain) == True:
         pass
     else:
-        PROJECTS.append(output_item)
+        PROJECTS[chain].append(output_item)
         if start == 0:
             print('Sending notification to Discord...')
+            dictOfColors = {
+                "all": 16224321,
+                "bsc": 13818639,
+                "polygon": 6883479,
+                "xdai":13429692,
+                "avax": 16711680,
+                "fantom":255,
+            }
             discord_webhook(
-                title = 'New Entry Detected!',
+                title = 'New Entry Detected on {}!'.format(chain),
                 description = '\b',
                 name = output_item[0],
                 url = output_item[1],
-                token = output_item[2])
+                token = output_item[2],
+                color = dictOfColors[chain])
         
 
 
@@ -150,13 +165,15 @@ def monitor(): #initiates monitor
     start = 1
 
     while True:
-        items = scraper()
-        for item in items:
-            try:
-                comparator(item,start)
-            except Exception as e:
-                pass
-
+        for chain in PROJECTS:
+            items = scraper(chain)
+            for item in items:
+                try:
+                    comparator(item, start, chain)
+                except Exception as e:
+                    pass
+        
+        print("Completed Scan")
         start = 0
 
         time.sleep(float(DELAY))
