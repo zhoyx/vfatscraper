@@ -9,8 +9,8 @@ import logging
 import os
 from os import environ
 
-# WEBHOOK = environ['WEBHOOK']
-# DELAY = environ['DELAY']
+WEBHOOK = environ['WEBHOOK']
+DELAY = environ['DELAY']
 
 logging.basicConfig(filename='VFATscraperlog.log', filemode='a', format='%(asctime)s - %(name)s - %(message)s', level=logging.DEBUG)
 
